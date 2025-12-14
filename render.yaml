@@ -1,0 +1,75 @@
+# Render.com Deployment Configuration
+# This file deploys the CP Automation Platform to Render.com free tier
+# Documentation: https://render.com/docs
+
+services:
+  # Backend API Service
+  - type: web
+    name: cp-automation-backend
+    runtime: node
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        fromDatabase:
+          name: cp-automation-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: GITHUB_CLIENT_ID
+        scope: env
+      - key: GITHUB_CLIENT_SECRET
+        scope: env
+      - key: DISCORD_CLIENT_ID
+        scope: env
+      - key: DISCORD_CLIENT_SECRET
+        scope: env
+      - key: GMAIL_USER
+        scope: env
+      - key: GMAIL_PASSWORD
+        scope: env
+      - key: TWILIO_ACCOUNT_SID
+        scope: env
+      - key: TWILIO_AUTH_TOKEN
+        scope: env
+      - key: TWILIO_WHATSAPP_NUMBER
+        scope: env
+
+  # Frontend Service
+  - type: web
+    name: cp-automation-frontend
+    runtime: node
+    plan: free
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm start
+    envVars:
+      - key: REACT_APP_API_URL
+        fromService:
+          name: cp-automation-backend
+          property: url
+          suffix: /api
+      - key: REACT_APP_WS_URL
+        fromService:
+          name: cp-automation-backend
+          property: url
+          suffix: ""
+
+# MongoDB Database
+databases:
+  - name: cp-automation-db
+    databaseName: cp_automation
+    plan: free
+    ipAllowList: []
+
+# Environment Variables for Render Dashboard
+# Set these in Render.com environment configuration:
+# - GITHUB_REDIRECT_URI=https://cp-automation-backend.onrender.com/api/auth/github/callback
+# - DISCORD_REDIRECT_URI=https://cp-automation-backend.onrender.com/api/auth/discord/callback
+# - DISCORD_WEBHOOK_URL=your-discord-webhook-url
